@@ -1,0 +1,188 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+package mlayerregister;
+
+/*
+   Protobuf definition for M Layer Register Specification v0.03
+   
+   M-layer expression, q, defined as: 
+   q = <q>{q}[[q]]
+   <q> is the aspect (generalized kind of quantity)
+   {q} is the value (numerical value or name of nominal type)
+   [[q]] is the scale, which includes the scale-type and reference (unit)
+
+   M-layer objects
+   Aspect
+    ID
+    Name
+    Symbol
+    Definition
+
+   Scale
+    ID
+    Name
+    Unit or reference
+    Scale type
+
+   Unit
+    ID
+    Name
+    Symbol
+    Definition
+  
+  Scale type
+    Ratio
+    Interval
+    BoundedInterval
+    Ordinal
+    Nominal
+
+  AspectScale
+    AspectID
+    ScaleID
+
+  Register Model - implement as Digital Objects
+  Allow M-Layer objects to be abstracted as Digital Objects
+  Identifiers held in DO identifier
+  DigitalObject
+    ID
+    type
+    metadata
+    content (m-layer object)
+
+  M Layer Expression
+  Value, Digital Object (AspectScale) 
+  Value, Digital Object (Scale)
+*/
+
+enum ScaleType {
+  RATIO = 0;
+  INTERVAL = 1;
+  ORDINAL = 2;
+}
+
+message Register {
+  string name = 1;
+  string uuid = 2;
+  repeated AspectObject aspects = 3;
+  repeated ScaleObject scales = 4;
+  repeated MObject mobjects = 5;
+  repeated ConversionObject converters = 6;
+}
+
+/* 
+   See Cordra DO implementation
+   gitlab.com/cnri/cordra/.../cordra-core/src/main/java/net/cnri/cordra/api/CordraObject.java
+
+   not included
+   JsonElement content - assume this is the specific m-layer object
+   JsonObject userMetadata
+   */
+
+message DigitalObject {
+  string id = 1;
+  string type = 2;
+  Metadata metadata = 3;
+  google.protobuf.Any content = 4;
+}
+
+/* 
+   Cordra Object Metadata
+   */
+
+message Metadata {
+  int64 createdOn = 1;
+  string createdBy = 2;
+  int64 modifiedOn = 3;
+  string modifiedBy = 4;
+  bool isVersion = 5;
+  string versionOf = 6;
+  string publishedBy = 7;
+
+}
+
+/* ObjectStore
+   */
+
+message DigitalObjectStore {
+  string name = 1;
+  string uuid = 2;
+  string parent_uuid = 3;
+  string address = 4;
+  DigitalObjectStoreInfo info = 5;
+}
+
+message DigitalObjectStoreInfo {
+  google.protobuf.Timestamp created = 1;
+  DigitalObjectStoreAuxInfo aux = 2;
+  repeated DigitalObject objects = 3;
+}
+
+message DigitalObjectStoreAuxInfo {
+  string description = 1;
+}
+
+message MLayerMsg {
+  string identifier = 1;
+  string uuid = 2;
+  string name = 3;
+  float value = 4;
+  MObject mobject = 5;
+  ScaleObject scale = 6;
+}
+
+message AspectObject {
+  string identifier = 1;
+  string uuid = 2;
+  string name = 3;
+  string symbol = 4;
+  string definition = 5;
+}
+
+message ScaleObject {
+  string identifier = 1;
+  string uuid = 2;
+  string name = 3;
+  string symbol = 4;
+  ScaleType scaletype = 5;
+  string referenceid = 6;
+}
+
+message AspectScaleObject {
+  string aspectid = 1;
+  string scaleid = 2;
+}
+
+/*
+   Reference or Unit, for example SI unit for length meter, m
+   */
+
+message ReferenceObject {
+  string identifier = 1;
+  string uuid = 2;
+  string name = 3;
+  string symbol = 4;
+  string definition = 5;
+}
+
+message MObject {
+  string identifier = 1;
+  string uuid = 2;
+  string name = 3;
+  ScaleObject scale = 4;
+  AspectObject aspect = 5;
+}
+
+message ConversionObject {
+  string identifier = 1;
+  string uuid = 2;
+  string name = 3;
+  string srcid = 4;
+  string dstid = 5;
+  ScaleType scaletype = 6;
+  int32 nparms = 7;
+  repeated float parameters = 8;
+}
+
