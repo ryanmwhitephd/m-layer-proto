@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/System",
+    "definitions": {
+        "System": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "dimensions": {
+                    "items": {
+                        "type": "integer"
+                    },
+                    "type": "array"
+                },
+                "prefix": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "System identifies the UnitSystem, dimensions and prefix\nthis is used when describing a reference that is a base unit\nin a unit system",
+            "description": "System identifies the UnitSystem, dimensions and prefixthis is used when describing a reference that is a base unitin a unit system"
+        },
+        "mlayer.Identifier": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Identifier"
+        }
+    }
+}

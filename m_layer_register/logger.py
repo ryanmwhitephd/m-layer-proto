@@ -53,6 +53,13 @@ class Logger:
         Logger.CONFIGURED_LEVEL = numeric_level
 
         return numeric_level
+    
+    @staticmethod
+    def streamhandler(**kwargs):
+        fh = logging.StreamHandler()
+        fh.setFormatter(logging.Formatter(Logger.FMT))
+        fh.setLevel(Logger.CONFIGURED_LEVEL)
+        logging.getLogger().addHandler(fh)
 
     @staticmethod
     def logfilehandler(**kwargs):
@@ -92,8 +99,9 @@ class Logger:
         # level = Logger.loglevel(**kwargs)
         _logname = "_" + obj.__class__.__name__ + "__logger"
         logging.getLogger().debug(
-            "Setting the log level for %s" % obj.__class__.__name__
+            "Setting the log level for %s at level" % obj.__class__.__name__ 
         )
+        logging.getLogger().debug("Configured log level %s" % Logger.CONFIGURED_LEVEL)
         getattr(obj, _logname).setLevel(Logger.CONFIGURED_LEVEL)
 
     @staticmethod
@@ -105,6 +113,7 @@ class Logger:
     def configure(obj, **kwargs):
         Logger.loglevel(**kwargs)
         Logger.setloglevel(obj, **kwargs)
-        if obj.__class__.__name__ == "Artemis":
-            Logger.logfilehandler(**kwargs)
-            Logger.setexternals()
+        Logger.streamhandler(**kwargs)
+        #if obj.__class__.__name__ == "BaseObjectStore":
+        #    Logger.logfilehandler(**kwargs)
+        #    Logger.setexternals()

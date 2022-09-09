@@ -1,0 +1,74 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/Aspect",
+    "definitions": {
+        "Aspect": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "context": {
+                    "items": {
+                        "$ref": "#/definitions/mlayer.Context"
+                    },
+                    "type": "array"
+                },
+                "definition": {
+                    "type": "string"
+                },
+                "alternate_id": {
+                    "items": {
+                        "$ref": "#/definitions/mlayer.Identifier"
+                    },
+                    "type": "array"
+                },
+                "metadata": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "type": "object"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Aspect",
+            "description": "Aspect can be considered kind of quantityin the most general sense. The role is to disambiguate the Scale."
+        },
+        "mlayer.Context": {
+            "properties": {
+                "locale": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context"
+        },
+        "mlayer.Identifier": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Identifier"
+        }
+    }
+}

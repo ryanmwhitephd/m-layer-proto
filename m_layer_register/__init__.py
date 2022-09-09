@@ -19,9 +19,9 @@ from m_layer_register.logger import Logger
 # logging.basicConfig(stream=sys.stdout,
 #                    format=Logger.FMT,
 #                    level=Logger.DEFAULT_LEVEL)
-# logging.debug("Logging configured in package init")
+logging.info("Logging configured in package init")
 
 sh = logging.StreamHandler(sys.stdout)
 sh.setFormatter(logging.Formatter(Logger.FMT))
-sh.setLevel(logging.DEBUG)
+sh.setLevel(logging.INFO)
 logging.getLogger().addHandler(sh)

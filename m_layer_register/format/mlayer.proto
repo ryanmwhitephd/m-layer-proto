@@ -76,9 +76,12 @@ message Register {
    See Cordra DO implementation
    gitlab.com/cnri/cordra/.../cordra-core/src/main/java/net/cnri/cordra/api/CordraObject.java
 
-   not included
+   Rather than JsonElement use protobuf.Any
    JsonElement content - assume this is the specific m-layer object
+   
+   not included
    JsonObject userMetadata
+   Payloads (part of the Digital Object specification)
    */
 
 message DigitalObject {
@@ -103,6 +106,41 @@ message Metadata {
 
 }
 
+/*
+Cordra Payload
+
+class Payload
+string name
+string filename
+string mediaType
+long size
+java.io.InputStream
+
+   */
+
+/*
+PID Kernel
+Kernel information for a persistent identifier
+www.rd-allliance.org/system/files/RDA Recommendation on PID Kernel Information_final.pdf
+
+PID                       Handle
+KernelInformationProfile  Handle
+digitalObjectType         Handle
+digitalObjectLocation     URL
+digitalObjectPolicy       Handle
+eTag                      Hex string
+dataModified              ISO 8601
+dateCreated
+version                   string
+wasDerivedFrom            PROV-DM properties
+
+*/
+
+/*
+   PID Type 
+
+*/
+
 /* ObjectStore
    */
 
@@ -124,6 +162,25 @@ message DigitalObjectStoreAuxInfo {
   string description = 1;
 }
 
+message Identifier {
+  string name = 1;
+  string value = 2;
+  string type = 3;
+  string description = 4;
+}
+
+message AlternateIdentifier {
+  string value = 1;
+  string type = 2;
+  string description = 3;
+}
+
+message Context {
+  string locale = 1;
+  string name = 2;
+  string symbol = 3;
+}
+
 message MLayerMsg {
   string identifier = 1;
   string uuid = 2;
@@ -139,6 +196,7 @@ message AspectObject {
   string name = 3;
   string symbol = 4;
   string definition = 5;
+  string locale = 6;
 }
 
 message ScaleObject {
@@ -148,6 +206,7 @@ message ScaleObject {
   string symbol = 4;
   ScaleType scaletype = 5;
   string referenceid = 6;
+  string referenceuuid = 7;
 }
 
 message AspectScaleObject {
@@ -165,7 +224,16 @@ message ReferenceObject {
   string name = 3;
   string symbol = 4;
   string definition = 5;
+  string locale = 6;
+  string system_id = 7;
+  string system_uuid = 8;
+  repeated int32 dimensions = 9;
+  int32 prefix = 10;
+  string alternateid = 11;
+  string alternateid_type = 12;
+  string alternateid_description = 13;
 }
+
 
 message MObject {
   string identifier = 1;
@@ -186,3 +254,83 @@ message ConversionObject {
   repeated float parameters = 8;
 }
 
+/*
+   Updated schemas
+*/
+
+message AspectObjectv2 {
+  Identifier id = 1;
+  Context context = 2;
+  string definition = 3;
+}
+
+message ScaleObjectv2 {
+  Identifier id = 1;
+  Context context = 2;
+  ScaleType scaletype = 5;
+  Identifier reference_id = 6;
+}
+
+message ReferenceObjectv2 {
+  Identifier id = 1;
+  Context context = 2;
+  string definition = 3;
+  Identifier system_id = 4;
+  Identifier alternate_id = 5;
+  repeated int32 dimensions = 6;
+  int32 prefix = 7;
+
+}
+
+message UnitSystemObject {
+  Identifier id = 1;
+  string name = 2;
+  repeated Identifier basis = 3;
+}
+
+/* Conversion between two scales of the same type 
+   with the same aspect
+ */
+message ConversionObjectv2 {
+  Identifier id = 1;
+  Identifier src_id = 2; /* ScaleObject identifier */
+  Identifier dst_id = 3; /* ScaleObject identifier */
+  repeated float factors = 5;
+}
+
+/* Conversion between two scales of different type 
+   with the same aspect
+ */
+
+message ScalesForAspectsv2 {
+  Identifier id = 1;
+  Identifier aspect_id = 2;
+  Identifier src_id = 3;
+  Identifier dst_id = 4;
+  repeated float factors = 6;
+}
+
+/* M-layer scales should be expressed as AspectScales
+   convenience to not express the Aspect can be handled
+   by ScaleForAspect
+   */
+message AspectScaleObjectv2 {
+  Identifier id = 1;
+  Identifier aspect_id = 2;
+  Identifier scale_id = 3;
+}
+
+/* Support to express data as a different ScaleAspect 
+   Aspect may change
+   Scale may change
+   Requires expressing data with AspectScales
+   */
+
+message CastingObjectv2 {
+  Identifier id = 1;
+  Identifier srd_id = 2;
+  Identifier dst_id = 3;
+  string function = 4;
+  repeated float parameters = 5;
+  
+}

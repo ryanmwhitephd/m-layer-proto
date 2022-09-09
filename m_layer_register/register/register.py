@@ -53,7 +53,7 @@ class MetaObject:
     name: str
     uuid: str
     parent_uuid: str
-    address: str
+    object_type: str
 
 
 class BaseBook(collections.abc.MutableMapping):
@@ -266,6 +266,7 @@ class BaseObjectStore(BaseBook):
         storetype="hfs",
         algorithm="sha1",
         alt_root=None,
+        **kwargs
     ):
         """
         Loads a base store type
@@ -273,7 +274,7 @@ class BaseObjectStore(BaseBook):
         Create a store from persisted data
         Or create a new one
         """
-        Logger.configure(self)
+        Logger.configure(self,**kwargs)
         self._mstore = DigitalObjectStore()
         self._dstore = FilesystemStore(f"{root}")
         self._alt_dstore = None

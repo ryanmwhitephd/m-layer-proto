@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/ScalesForAspect",
+    "definitions": {
+        "ScalesForAspect": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "aspect_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "src_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "dst_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "factors": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Conversion between two scales of different type \nwith the same aspect",
+            "description": "Conversion between two scales of different type with the same aspect"
+        },
+        "mlayer.Identifier": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Identifier"
+        }
+    }
+}

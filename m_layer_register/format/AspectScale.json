@@ -1,0 +1,45 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/AspectScale",
+    "definitions": {
+        "AspectScale": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "aspect_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "scale_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Aspect Scale",
+            "description": "M-layer scales should be expressed as AspectScalesconvenience to not express the Aspect can be handledby ScaleForAspect"
+        },
+        "mlayer.Identifier": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Identifier"
+        }
+    }
+}

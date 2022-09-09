@@ -1,0 +1,70 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/Cast",
+    "definitions": {
+        "Cast": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "src_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "src_aspect_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "src_scale_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "dst_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "dst_aspect_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "dst_scale_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "function": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "type": "object"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Cast",
+            "description": "Support to express data as a different ScaleAspect Aspect may changeScale may changeExpress data with registered AspectScalesExpress data with registered Aspect and Scale"
+        },
+        "mlayer.Identifier": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Identifier"
+        }
+    }
+}

@@ -1,0 +1,95 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/Reference",
+    "definitions": {
+        "Reference": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "context": {
+                    "items": {
+                        "$ref": "#/definitions/mlayer.Context"
+                    },
+                    "type": "array"
+                },
+                "definition": {
+                    "type": "string"
+                },
+                "system": {
+                    "items": {
+                        "$ref": "#/definitions/mlayer.System"
+                    },
+                    "type": "array"
+                },
+                "alternate_id": {
+                    "items": {
+                        "$ref": "#/definitions/mlayer.Identifier"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Reference is the traditional notion of unit",
+            "description": "Reference is the traditional notion of unit"
+        },
+        "mlayer.Context": {
+            "properties": {
+                "locale": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context"
+        },
+        "mlayer.Identifier": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Identifier"
+        },
+        "mlayer.System": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "dimensions": {
+                    "items": {
+                        "type": "integer"
+                    },
+                    "type": "array"
+                },
+                "prefix": {
+                    "type": "number"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "System identifies the UnitSystem, dimensions and prefix\nthis is used when describing a reference that is a base unit\nin a unit system",
+            "description": "System identifies the UnitSystem, dimensions and prefixthis is used when describing a reference that is a base unitin a unit system"
+        }
+    }
+}

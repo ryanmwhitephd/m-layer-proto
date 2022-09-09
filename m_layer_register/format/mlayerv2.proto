@@ -1,0 +1,171 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+package mlayer;
+/*
+   Updated schemas
+*/
+
+message DigitalObject {
+  string id = 1; 
+  string type = 2;
+  Metadata metadata = 3;
+  google.protobuf.Any content = 4;
+}
+
+/* 
+   Cordra Object Metadata
+   */
+
+message Metadata {
+  int64 createdOn = 1;
+  string createdBy = 2;
+  int64 modifiedOn = 3;
+  string modifiedBy = 4;
+  bool isVersion = 5;
+  string versionOf = 6;
+  string publishedBy = 7;
+
+}
+
+message DigitalObjectStore {
+  Identifier id = 1;
+  string address = 2;
+  DigitalObjectStoreInfo info = 3;
+}
+
+message DigitalObjectStoreInfo {
+  google.protobuf.Timestamp created = 1;
+  DigitalObjectStoreAuxInfo aux = 2;
+  repeated DigitalObject objects = 3;
+}
+
+message DigitalObjectStoreAuxInfo {
+  string description = 1;
+}
+
+enum ScaleType {
+  NONE = 0;
+  RATIO = 1;
+  INTERVAL = 2;
+  ORDINAL = 3;
+  BOUNDED = 4;
+}
+
+message Identifier {
+  string name = 1;
+  string value = 2;
+  string type = 3;
+  string description = 4;
+}
+
+message Context {
+  string locale = 1;
+  string name = 2;
+  string symbol = 3;
+}
+
+/* Aspect can be considered kind of quantity
+   in the most general sense. The role is to 
+   disambiguate the Scale.
+   */
+message Aspect {
+  Identifier id = 1;
+  repeated Context context = 2;
+  string definition = 3;
+  repeated Identifier alternate_id = 4;
+  map <string, string> metadata = 5;
+}
+
+/* Scale is the m-layer concept which qualifies 
+   the reference unit with the type of scale.
+   The same reference unit may be used to express data on 
+   different scale types.
+   */
+message Scale {
+  Identifier id = 1;
+  Context context = 2;
+  ScaleType scaletype = 5;
+  Identifier reference_id = 6;
+}
+
+/* System identifies the UnitSystem, dimensions and prefix
+   this is used when describing a reference that is a base unit
+   in a unit system
+   */
+
+message System {
+  Identifier id = 1;
+  repeated int32 dimensions = 2;
+  double prefix = 3;
+} 
+
+/* Reference is the traditional notion of unit
+   */
+
+message Reference {
+  Identifier id = 1;
+  repeated Context context = 2;
+  string definition = 3;
+  repeated System system = 4;
+  repeated Identifier alternate_id = 5;
+}
+
+message UnitSystem {
+  Identifier id = 1;
+  string name = 2;
+  repeated Identifier basis = 3;
+}
+
+/* Conversion between two scales of the same type 
+   with the same aspect
+ */
+message Conversion {
+  Identifier id = 1;
+  Identifier src_id = 2;
+  Identifier dst_id = 3;
+  ScaleType scaletype = 4;
+  repeated string factors = 5;
+}
+
+/* Conversion between two scales of different type 
+   with the same aspect
+ */
+
+message ScalesForAspect {
+  Identifier id = 1;
+  Identifier aspect_id = 2;
+  Identifier src_id = 3;
+  Identifier dst_id = 4;
+  repeated string factors = 6;
+}
+
+/* M-layer scales should be expressed as AspectScales
+   convenience to not express the Aspect can be handled
+   by ScaleForAspect
+   */
+message AspectScale {
+  Identifier id = 1;
+  Identifier aspect_id = 2;
+  Identifier scale_id = 3;
+}
+
+/* Support to express data as a different ScaleAspect 
+   Aspect may change
+   Scale may change
+   Express data with registered AspectScales
+   Express data with registered Aspect and Scale
+   */
+message Cast {
+  Identifier id = 1;
+  Identifier src_id = 2;
+  Identifier src_aspect_id = 3;
+  Identifier src_scale_id = 4;
+  Identifier dst_id = 5;
+  Identifier dst_aspect_id = 6;
+  Identifier dst_scale_id = 7;
+  string function = 8;
+  map <string,string> parameters = 9;
+  
+}

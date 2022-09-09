@@ -16,6 +16,8 @@ from google.protobuf.json_format import MessageToDict
 
 import uuid
 import logging
+import json
+from m_layer_register.logger import Logger
 
 def create_register():
     register = Register()
@@ -115,8 +117,9 @@ def DOStore():
     for o in store.info.objects:
         print(do.id, do.type)
 
-    a_store = BaseObjectStore(f"/home/rwhite/Projects/m-layer/m-layer-register", "teststore.pb", store.uuid)
-    print(a_store[do.id].type)
+    print("Test the Register")
+    a_store = BaseObjectStore(f"/home/rwhite/Projects/m-layer/m-layer-register", "teststore.pb", store.uuid, loglevel="debug")
+    print("Object type: ", a_store[do.id].type, " id: ", do.id)
     a_store[do.id].content.Unpack(mltemp)
     print(MessageToJson(mltemp))
 
@@ -135,9 +138,105 @@ class DigitalObjectWrapper():
     def getContent(self):
         pass
 
+def aspect_to_dict(aspect):
+    adict = {}
+    adict["__entry__"] = aspect.DESCRIPTOR.name
+    adict["uid"] = [aspect.identifier, aspect.uuid]
+    adict["locale"] = {'default':
+            {"name":aspect.name,"symbol":aspect.symbol}}
+    print(json.dumps(adict, indent=2))
 
+def aspectv2_to_dict(aspect):
+    adict = {}
+    adict["__entry__"] = aspect.DESCRIPTOR.name
+    adict["uid"] = [aspect.id.name, aspect.id.value]
+    adict["locale"] = {aspect.context.locale:
+            {"name":aspect.context.name,"symbol":aspect.context.symbol}}
+    print(json.dumps(adict, indent=2))
+
+def aspects():
+    mltemperature = AspectObject() 
+    mltemperature.identifier = "ml_temperature" 
+    mltemperature.uuid = str(uuid.uuid4())
+    mltemperature.locale = "default"
+    mltemperature.name = "temperature"
+    mltemperature.symbol = "T"
+    print(MessageToDict(mltemperature))
+    
+    mltempdiff = AspectObject()
+    mltempdiff.identifier = "ml_temperature_difference"
+    mltempdiff.name = "temperature-difference"
+    mltempdiff.uuid = str(uuid.uuid4())
+    mltempdiff.symbol = "dT"
+    mltempdiff.locale = "default"
+    print(MessageToDict(mltempdiff))
+
+    mltorque = AspectObject()
+    mltorque.identifier = "ml_torque"
+    mltorque.uuid = str(uuid.uuid4())
+    mltorque.locale = "default"
+    mltorque.name = "torque"
+    mltorque.symbol = "M"
+    print(json.dumps(MessageToDict(mltorque),indent=2))
+    aspect_to_dict(mltorque)
+
+    mltorquev2 = AspectObjectv2()
+
+    mltorquev2.id.name = "ml_torque"
+    mltorquev2.id.value = str(uuid.uuid4())
+    mltorquev2.id.type = "uuid4"
+    mltorquev2.context.locale = "default"
+    mltorquev2.context.name = "torque"
+    mltorquev2.context.symbol = "M"
+    print(json.dumps(MessageToDict(mltorquev2),indent=2))
+    aspectv2_to_dict(mltorquev2)
+
+def references():
+    si_celsius = ReferenceObject()
+    si_celsius.identifier = "si_celsius"
+    si_celsius.uuid = str(uuid.uuid4())
+    si_celsius.locale = "default"
+    si_celsius.name = "celsius"
+    si_celsius.symbol = "degree C"
+    si_celsius.alternateid = "Cel"
+    si_celsius.alternateid_type = "UCUM"
+    si_celsius.alternateid_description = "degree Celsius"
+    print(MessageToDict(si_celsius))
+
+    si_becquerel = ReferenceObject()
+    si_becquerel.identifier = "si_becquerel"
+    si_becquerel.uuid = str(uuid.uuid4())
+    si_becquerel.locale = "default"
+    si_becquerel.name = "becquerel"
+    si_becquerel.symbol = "Bq"
+    si_becquerel.system_id = "si_system"
+    si_becquerel.system_uuid = str(uuid.uuid4()) #Requires the actual uuid of the system that is registered 
+    si_becquerel.dimensions.extend([0,0,-1,0,0,0,0])
+    si_becquerel.prefix = 1
+    si_becquerel.alternateid = "Bq"
+    si_becquerel.alternateid_type = "UCUM"
+    si_becquerel.alternateid_description = "becquerel"
+    print(json.dumps(MessageToDict(si_becquerel),indent=2))
+
+    si_becquerel = ReferenceObjectv2()
+    si_becquerel.id.name = "si_becquerel"
+    si_becquerel.id.value = str(uuid.uuid4())
+    si_becquerel.id.type = "uuid4"
+    si_becquerel.context.locale = "default"
+    si_becquerel.context.name = "becquerel"
+    si_becquerel.context.symbol = "Bq"
+    si_becquerel.system_id.name = "si_system"
+    si_becquerel.system_id.value = str(uuid.uuid4()) #Requires the actual uuid of the system that is registered 
+    si_becquerel.dimensions.extend([0,0,-1,0,0,0,0])
+    si_becquerel.prefix = 1
+    si_becquerel.alternate_id.value = "Bq"
+    si_becquerel.alternate_id.type = "UCUM"
+    si_becquerel.alternate_id.description = "becquerel"
+    print(json.dumps(MessageToDict(si_becquerel),indent=2))
 if __name__ == "__main__":
-
+    
+    logging.getLogger().setLevel(logging.INFO)
+    logging.info("Register Example")
     register = create_register()
     print(register.name)
     print(register.aspects)
@@ -167,6 +266,8 @@ if __name__ == "__main__":
     print(register.DESCRIPTOR.name)
 
     DOStore()
-
+    
+    aspects()
+    references()
 
     

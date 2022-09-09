@@ -1,0 +1,84 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/Scale",
+    "definitions": {
+        "Scale": {
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                },
+                "context": {
+                    "$ref": "#/definitions/mlayer.Context",
+                    "additionalProperties": true
+                },
+                "scaletype": {
+                    "enum": [
+                        "NONE",
+                        0,
+                        "RATIO",
+                        1,
+                        "INTERVAL",
+                        2,
+                        "ORDINAL",
+                        3,
+                        "BOUNDED",
+                        4
+                    ],
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "integer"
+                        }
+                    ],
+                    "title": "Scale Type"
+                },
+                "reference_id": {
+                    "$ref": "#/definitions/mlayer.Identifier",
+                    "additionalProperties": true
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Scale",
+            "description": "Scale is the m-layer concept which qualifies the reference unit with the type of scale.The same reference unit may be used to express data on different scale types."
+        },
+        "mlayer.Context": {
+            "properties": {
+                "locale": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context"
+        },
+        "mlayer.Identifier": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Identifier"
+        }
+    }
+}
