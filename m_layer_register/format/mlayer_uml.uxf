@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="13.3">
+  <zoom_level>6</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>162</x>
+      <y>240</y>
+      <w>240</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>Reference
+--
+-id:Identifier
+-context: Context
+-system:System
+-alternate_id: List{Identifer}
+--
+Responsibilities
+-- External information about a reference unit</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>36</x>
+      <y>648</y>
+      <w>126</w>
+      <h>78</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;enumeration&gt;&gt;
+ScaleType
+--
+Ratio
+Interval
+Ordinal
+Bounded
+Nominal
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>426</x>
+      <y>240</y>
+      <w>180</w>
+      <h>84</h>
+    </coordinates>
+    <panel_attributes>Scale
+--
+id: Identifier
+type:ScaleType
+context: Context
+reference_id: Identifier {Reference}
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>36</x>
+      <y>564</y>
+      <w>204</w>
+      <h>66</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;type&gt;&gt;
+Identifier
+--
+-name: String
+-value: String
+-type: String
+--</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>666</x>
+      <y>246</y>
+      <w>150</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Aspect
+--
+-id: Identifer
+-context: Context
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>588</x>
+      <y>108</y>
+      <w>108</w>
+      <h>66</h>
+    </coordinates>
+    <panel_attributes>AspectScale
+--
+-id: Identifier
+-scale_id: Identifier
+-aspect_id: Identifier
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>186</x>
+      <y>468</y>
+      <w>192</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>UnitSystem
+--
+-id:Identifier
+-name: String
+-basis:List{Reference}
+
+
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>36</x>
+      <y>738</y>
+      <w>108</w>
+      <h>54</h>
+    </coordinates>
+    <panel_attributes>Context
+--
+-locale: String
+-name: String
+-symbol: String
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>36</x>
+      <y>426</y>
+      <w>126</w>
+      <h>114</h>
+    </coordinates>
+    <panel_attributes>System
+--
+-unitsystem_id: Identifier {UnitSystem}
+-dimensions: Array {Int}
+-prefix: Integer
+--
+Responsibilities
+-- Identifies the UnitSystem, dimensions and prefix.
+-- This is used when describing a reference that is a base reference or a systematic reference.
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>90</x>
+      <y>276</y>
+      <w>84</w>
+      <h>162</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>120.0;10.0;10.0;10.0;10.0;250.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>396</x>
+      <y>276</y>
+      <w>42</w>
+      <h>18</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;50.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>276</x>
+      <y>324</y>
+      <w>30</w>
+      <h>156</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=0.n</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;240.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>156</x>
+      <y>480</y>
+      <w>42</w>
+      <h>18</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>50.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>510</x>
+      <y>132</y>
+      <w>90</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>130.0;10.0;10.0;180.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>690</x>
+      <y>138</y>
+      <w>66</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;90.0;180.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>522</x>
+      <y>378</y>
+      <w>192</w>
+      <h>78</h>
+    </coordinates>
+    <panel_attributes>ScalesForAspect
+--
+aspect_id: Identifier {Aspect}
+src_id: Identfier {Scale}
+dst_id: Identfier {Scale}
+factors: List {Value,Type}
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>720</x>
+      <y>6</y>
+      <w>336</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>Conversion
+--
+id: Identifier
+src_id: Identifier {AspectScale, ScalesForAspect}
+dst_id: Identifier {AspectScale, ScalesForAspect}
+factors: List {Value, Type}
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>348</x>
+      <y>6</y>
+      <w>216</w>
+      <h>78</h>
+    </coordinates>
+    <panel_attributes>Cast
+--
+id: Identifier
+src_id: Identifier {AspectScale}
+dst_id: Identifier {AspectScale}
+function: String
+parameters: Map&lt;Key, Value&gt;
+--</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>468</x>
+      <y>312</y>
+      <w>66</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=0.2</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;180.0;90.0;180.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>708</x>
+      <y>288</y>
+      <w>72</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>100.0;10.0;100.0;220.0;10.0;220.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>432</x>
+      <y>78</y>
+      <w>168</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1..n</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;100.0;260.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>690</x>
+      <y>90</y>
+      <w>192</w>
+      <h>66</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1..n</panel_attributes>
+    <additional_attributes>280.0;10.0;280.0;90.0;10.0;90.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>708</x>
+      <y>90</y>
+      <w>204</w>
+      <h>342</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1..n</panel_attributes>
+    <additional_attributes>300.0;10.0;300.0;550.0;10.0;550.0</additional_attributes>
+  </element>
+</diagram>
