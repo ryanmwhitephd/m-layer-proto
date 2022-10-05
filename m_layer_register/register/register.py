@@ -37,10 +37,10 @@ import urllib.parse
 from dataclasses import dataclass
 
 from simplekv.fs import FilesystemStore
-
+from google.protobuf.json_format import MessageToDict
 from m_layer_register.logger import Logger
-from m_layer_register.model.mlayer_pb2 import DigitalObjectStore
-from m_layer_register.model.mlayer_pb2 import DigitalObject
+from m_layer_register.model.mlayerv2_pb2 import * 
+#from m_layer_register.model.mlayerv2_pb2 import DigitalObjectStore, DigitalObject
 
 @dataclass
 class MetaObject:
@@ -52,8 +52,9 @@ class MetaObject:
 
     name: str
     uuid: str
-    parent_uuid: str
     object_type: str
+    address: str
+    
 
 
 class BaseBook(collections.abc.MutableMapping):
@@ -285,12 +286,12 @@ class BaseObjectStore(BaseBook):
         if store_uuid is None:
             # Generate a new store
             self.__logger.info("Generating new metastore")
-            self._mstore.uuid = str(uuid.uuid4())
-            self._mstore.name = f"{self._mstore.uuid}.{name}.cronus.pb"
-            self._mstore.address = self._dstore.url_for(self._mstore.name)
+            self._mstore.id.value = str(uuid.uuid4())
+            self._mstore.id.name = f"{self._mstore.id.value}.{name}.pb"
+            #self._mstore.address = self._dstore.url_for(self._mstore.name)
             self._mstore.info.created.GetCurrentTime()
-            self.__logger.info("Metastore ID %s", self._mstore.uuid)
-            self.__logger.info("Storage location %s", self._mstore.address)
+            self.__logger.info("Metastore ID %s", self._mstore.id.name)
+            #self.__logger.info("Storage location %s", self._mstore.address)
             self.__logger.info("Created on %s", self._mstore.info.created.ToDatetime())
         elif store_uuid is not None:
             self.__logger.info("Load metastore from path")
@@ -301,9 +302,9 @@ class BaseObjectStore(BaseBook):
             )
             raise KeyError
 
-        self._name = self._mstore.name
-        self._uuid = self._mstore.uuid
-        self._parent_uuid = self._mstore.parent_uuid
+        self._name = self._mstore.id.name
+        self._uuid = self._mstore.id.value
+        #self._parent_uuid = self._mstore.parent_uuid
         self._info = self._mstore.info
         self._aux = self._info.aux
 
@@ -316,6 +317,15 @@ class BaseObjectStore(BaseBook):
             self.__logger.debug("Loading object %s", item.id)
             objects[item.id] = item
 
+        self._index = list()
+        self._mltype_mapper = {}
+        self._mltype_mapper["Aspect"] = Aspect
+        self._mltype_mapper["Reference"] = Reference 
+        self._mltype_mapper["Scale"] = Scale 
+        self._mltype_mapper["UnitSystem"] = UnitSystem 
+        self._mltype_mapper["ScalesForAspect"] = ScalesForAspect 
+        self._mltype_mapper["Conversion"] = Conversion 
+        self._mltype_mapper["Cast"] = Cast 
         super().__init__(objects)
     
     @property
@@ -357,7 +367,7 @@ class BaseObjectStore(BaseBook):
         buf = self._mstore.SerializeToString()
         self._dstore.put(self._mstore.name, buf)
 
-    def register_content(self, content, info, **kwargs):
+    def register_content(self, content, **kwargs):
         """
         Returns a dataclass representing the content object
         content is the raw data, e.g. serialized bytestream to be persisted
@@ -367,27 +377,64 @@ class BaseObjectStore(BaseBook):
         register method and validate all the required inputs are received
         """
 
-        #metaobj = None
-        dataset_id = kwargs.get("dataset_id", None)
-        partition_key = kwargs.get("partition_key", None)
-        job_id = kwargs.get("job_id", None)
-        #  menu_id = kwargs.get('menu_id', None)
-        #  config_id = kwargs.get('config_id', None)
-        glob = kwargs.get("glob", None)
-
-        content_type = type(content)
         if kwargs is not None:
             self.__logger.debug("Registering content %s", kwargs)
         
-        self.__logger.debug("Register new dataset")
         obj = self._mstore.info.objects.add()
-        obj.uuid = str(uuid.uuid4())  # Register new datsets with UUID4
-        obj.parent_uuid = self._uuid
-        obj.name = f"{obj.uuid}.dataset"
-        obj.address = None #self._dstore.url_for(obj.name)
-        self[obj.uuid] = obj
-        return MetaObject(obj.name, obj.uuid, obj.parent_uuid, obj.address)
-    
+        obj.id = content.id.value 
+        #obj.name = content.id.name 
+        #obj.address = None #self._dstore.url_for(obj.name)
+        obj.content.Pack(content)
+        self._index.append(content)
+        obj.type = content.DESCRIPTOR.name
+        self[obj.id] = obj
+        return MetaObject(content.id.name, content.id.value, obj.type, None)
+   
+    def index_content(self):
+        
+        type_ids = collections.defaultdict(set) 
+        for id_ in self.keys():
+            #print(id_, self[id_].type)
+            type_ids[self[id_].type].append(id_)
+            content = self._mltype_mapper[self[id_].type]()
+            self[id_].content.Unpack(content)
+            content = MessageToDict(content)
+            #self._index[self[id_].type] = aspect_ids.add(id_)
+        return type_ids 
+        print(type_ids)
+
+    def pretty_search(self, dict_or_list, key_to_search, search_for_first_only=False):
+        """
+        stackoverflow 8383136 parsing-json-and-searching-through-it
+        """
+        search_result = set()
+        if isinstance(dict_or_list, dict):
+            for key in dict_or_list:
+                key_value = dict_or_list[key]
+                if key == key_to_search:
+                    if search_for_first_only:
+                        return key_value
+                    else:
+                        search_result.add(key_value)
+                if isinstance(key_value, dict) or isinstance(key_value, list) or isinstance(key_value, set):
+                    _search_result = self.pretty_search(key_value, key_to_search, search_for_first_only)
+                    if _search_result and search_for_first_only:
+                        return _search_result
+                    elif _search_result:
+                        for result in _search_result:
+                            search_result.add(result)
+        elif isinstance(dict_or_list, list) or isinstance(dict_or_list, set):
+            for element in dict_or_list:
+                if isinstance(element, list) or isinstance(element, set) or isinstance(element, dict):
+                    _search_result = self.pretty_search(element, key_to_search, search_for_first_only)
+                    if _search_result and search_for_first_only:
+                        return _search_result
+                    elif _search_result:
+                        for result in _search_result:
+                            search_result.add(result)
+        return search_result if search_result else None
+
+        pass
     def put(self, id_, content):
         """
         Writes data to kv store
@@ -466,7 +513,7 @@ class BaseObjectStore(BaseBook):
         enfore immutible store
         """
         if id_ in self:
-            self.__logger.error("Key exists %s", id_)
+            self.__logger.error("Key exists, key: %s, type: %s", id_, msg.type)
             raise ValueError
         if not isinstance(id_, str):
             raise TypeError

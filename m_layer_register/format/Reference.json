@@ -28,6 +28,9 @@
                         "$ref": "#/definitions/mlayer.Identifier"
                     },
                     "type": "array"
+                },
+                "systematic": {
+                    "type": "boolean"
                 }
             },
             "additionalProperties": true,
@@ -83,7 +86,10 @@
                     "type": "array"
                 },
                 "prefix": {
-                    "type": "number"
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
                 }
             },
             "additionalProperties": true,

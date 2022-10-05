@@ -82,12 +82,14 @@ message Aspect {
    the reference unit with the type of scale.
    The same reference unit may be used to express data on 
    different scale types.
+   systematic indicates whether scale is composed from a base units in a unit system
    */
 message Scale {
   Identifier id = 1;
   Context context = 2;
   ScaleType scaletype = 5;
   Identifier reference_id = 6;
+  bool systematic = 7;
 }
 
 /* System identifies the UnitSystem, dimensions and prefix
@@ -98,7 +100,7 @@ message Scale {
 message System {
   Identifier id = 1;
   repeated int32 dimensions = 2;
-  double prefix = 3;
+  repeated string prefix = 3;
 } 
 
 /* Reference is the traditional notion of unit
@@ -110,6 +112,7 @@ message Reference {
   string definition = 3;
   repeated System system = 4;
   repeated Identifier alternate_id = 5;
+  bool systematic = 6;
 }
 
 message UnitSystem {
@@ -126,7 +129,8 @@ message Conversion {
   Identifier src_id = 2;
   Identifier dst_id = 3;
   ScaleType scaletype = 4;
-  repeated string factors = 5;
+  string function = 5;
+  map <string, string> parameters = 6;
 }
 
 /* Conversion between two scales of different type 
@@ -138,7 +142,8 @@ message ScalesForAspect {
   Identifier aspect_id = 2;
   Identifier src_id = 3;
   Identifier dst_id = 4;
-  repeated string factors = 6;
+  string function = 5;
+  map <string, string> parameters = 6;
 }
 
 /* M-layer scales should be expressed as AspectScales

@@ -39,11 +39,14 @@
                     ],
                     "title": "Scale Type"
                 },
-                "factors": {
-                    "items": {
+                "function": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "additionalProperties": {
                         "type": "string"
                     },
-                    "type": "array"
+                    "type": "object"
                 }
             },
             "additionalProperties": true,

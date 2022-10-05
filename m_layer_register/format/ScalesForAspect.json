@@ -20,11 +20,14 @@
                     "$ref": "#/definitions/mlayer.Identifier",
                     "additionalProperties": true
                 },
-                "factors": {
-                    "items": {
+                "function": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "additionalProperties": {
                         "type": "string"
                     },
-                    "type": "array"
+                    "type": "object"
                 }
             },
             "additionalProperties": true,

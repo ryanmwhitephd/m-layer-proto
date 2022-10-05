@@ -21,12 +21,24 @@ from google.protobuf.json_format import MessageToDict
 
 from m_layer_register.model.mlayerv2_pb2 import * 
 from m_layer_register.logger import Logger
+from m_layer_register.register.register import BaseObjectStore
+
+#from m_layer.context import global_context as ctx
+from m_layer.context import Context
+from m_layer.expression import expr, value
+from m_layer.uid import UID
 
 @Logger.logged
 class Mapper():
 
-    def __init__(self, store, path_to_schema,loglevel):
+    def __init__(self, 
+            store, 
+            register, 
+            context,
+            path_to_schema,loglevel):
         self.store = store
+        self.register = register
+        self.context = context # M-layer context
         self.path_schema = path_to_schema
         Logger.configure(self,loglevel=loglevel)
         
@@ -70,10 +82,13 @@ class Mapper():
         return schema
 
     def add_object(self, mlobject):
+
         do = self.store.info.objects.add()
         do.id = mlobject.id.value
         do.type = mlobject.DESCRIPTOR.name
         do.content.Pack(mlobject)
+
+        dop = self.register.register_content(mlobject)
    
     def validate(self, ref, test):
         self.__logger.debug("Validate")
@@ -103,6 +118,7 @@ class Mapper():
         obj = self.mltype_mapper[mlobj.DESCRIPTOR.name](mlobj)
         self.validate(refobj, obj)
         self.add_object(mlobj)
+        self.context._load_entity(obj)
 
 
     def dict_to_aspect(self, obj):
@@ -142,8 +158,9 @@ class Mapper():
         mlobj = Reference()
         mlobj.id.name = obj["uid"][0]
         mlobj.id.value = str(obj["uid"][1])
+        self.__logger.debug("Reference object id: %s ", mlobj.id.value)
         mlobj.id.type = "uuid4"
-        
+        self.__logger.debug(obj.keys()) 
         for key in obj["locale"]:
             context = mlobj.context.add()
             context.locale = key
@@ -152,16 +169,25 @@ class Mapper():
             context.symbol = obj["locale"][key]["symbol"]
         
         if "system" in obj.keys():
+            dims = obj["system"]["dimensions"]
+            self.__logger.debug("Dimensions from dict %s %s", dims, type(dims))
+            dims = eval(dims)
+            self.__logger.debug("Dimensions from dict %s %s", dims, type(dims))
             system = mlobj.system.add()
             system.id.name = obj["system"]["uid"][0]
             system.id.value = str(obj["system"]["uid"][1])
-            system.dimensions.extend(obj["system"]["dimensions"])
-            system.prefix = obj["system"]["prefix"]
-        
-        alternate_id = mlobj.alternate_id.add()
-        alternate_id.value = obj["UCUM"]["code"]
-        alternate_id.type = "UCUM"
-        alternate_id.description = obj["UCUM"]["description"]
+            system.dimensions.extend(eval(obj["system"]["dimensions"]))
+            system.prefix.extend(obj["system"]["prefix"])
+        if "UCUM" in obj.keys(): 
+            alternate_id = mlobj.alternate_id.add()
+            alternate_id.value = obj["UCUM"]["code"]
+            alternate_id.type = "UCUM"
+            alternate_id.description = obj["UCUM"]["description"]
+        if 'systematic' in obj.keys():
+            self.__logger.debug("obj has systematic field")
+            mlobj.systematic = bool(obj["systematic"])
+            self.__logger.debug(mlobj.systematic)
+       
         
         return mlobj
 
@@ -169,6 +195,7 @@ class Mapper():
         obj = {}
         obj["__entry__"] = mlobj.DESCRIPTOR.name
         obj["uid"] = [mlobj.id.name,int(mlobj.id.value)]
+        self.__logger.debug("Reference mlobject id: %s ", mlobj.id.value)
         obj['locale'] = {}
         for ctx in mlobj.context:
             if ctx.name == '':
@@ -177,14 +204,21 @@ class Mapper():
                 obj["locale"][ctx.locale] = {"name":ctx.name, "symbol":ctx.symbol}
         for sys in mlobj.system:
             obj["system"] = {"uid":[sys.id.name, int(sys.id.value)],
-                        "dimensions":sys.dimensions,
+                        "dimensions":str(sys.dimensions),
                         "prefix":sys.prefix}
         for alt in mlobj.alternate_id:
             obj["UCUM"] = {"code":alt.value,"description":alt.description}
+        try:
+            if mlobj.systematic is True:
+                self.__logger.debug("mlobj has systematic field")
+                obj['systematic'] = int(mlobj.systematic)
+        except ValueError:
+            self.__logger.error("systematic field not present")
         
         return obj
     
     def dict_to_scale(self, obj):
+        self.__logger.debug(obj)
         mlobj = Scale()
         mlobj.id.name = obj["uid"][0] 
         mlobj.id.value = str(obj["uid"][1])
@@ -192,6 +226,8 @@ class Mapper():
         mlobj.reference_id.name = obj["reference"][0] 
         mlobj.reference_id.value = str(obj["reference"][1])
         mlobj.scaletype = self.scale_type[obj["scale_type"]]
+        if 'systematic' in obj.keys():
+            mlobj.systematic = obj["systematic"]
         return mlobj
 
     def scale_to_dict(self, mlobj):
@@ -200,6 +236,8 @@ class Mapper():
         obj["uid"] = [mlobj.id.name, int(mlobj.id.value)]
         obj["reference"] = [mlobj.reference_id.name, int(mlobj.reference_id.value)]
         obj["scale_type"] = self.scale_type[mlobj.scaletype]
+        if(mlobj.systematic) is True:
+            obj['systematic'] = int(mlobj.systematic)
         return obj
     
     def dict_to_system(self, obj):
@@ -227,14 +265,19 @@ class Mapper():
         return obj
     
     def dict_to_scalesfor(self, obj):
+        # Identifier required, how to compose?
         mlobj = ScalesForAspect()
+        mlobj.id.value = str(uuid.uuid4())
         mlobj.aspect_id.name = obj["aspect"][0]
         mlobj.aspect_id.value = str(obj["aspect"][1])
         mlobj.src_id.name = obj["src"][0]
         mlobj.src_id.value = str(obj["src"][1])
         mlobj.dst_id.name = obj["dst"][0]
         mlobj.dst_id.value = str(obj["dst"][1])
-        mlobj.factors.extend(obj["factors"])
+        mlobj.function = obj["function"]
+        for key in obj["parameters"]:
+            mlobj.parameters[key] = obj["parameters"][key]
+        #mlobj.factors.extend(obj["factors"])
         
         return mlobj
 
@@ -244,19 +287,30 @@ class Mapper():
         obj["aspect"] = [mlobj.aspect_id.name, int(mlobj.aspect_id.value)]
         obj["src"] = [mlobj.src_id.name, int(mlobj.src_id.value)]
         obj["dst"] = [mlobj.dst_id.name, int(mlobj.dst_id.value)]
-        obj["factors"] = []
-        for f in mlobj.factors: obj["factors"].append(f)
+        obj["function"] = mlobj.function
+        obj["parameters"] = {}
+        for key in mlobj.parameters:
+            obj["parameters"][key] = mlobj.parameters[key]
+        #obj["factors"] = []
+        #for f in mlobj.factors: obj["factors"].append(f)
         
         return obj
 
     def dict_to_conversion(self,obj):
+        # Identifiers for conversion
+        # Generate new ids or compose from src and dst identifiers
         mlobj = Conversion()
+        mlobj.id.value = str(uuid.uuid4())
         mlobj.src_id.name = obj["src"][0]
         mlobj.src_id.value = str(obj["src"][1])
         mlobj.dst_id.name = obj["dst"][0]
         mlobj.dst_id.value = str(obj["dst"][1])
-        mlobj.factors.extend(obj["factors"])
+        mlobj.function = obj["function"]
+        for key in obj["parameters"]:
+            mlobj.parameters[key] = obj["parameters"][key]
+        #mlobj.factors.extend(obj["factors"])
         
+        #mlobj.id.value = mlobj.src_id.value + "_" + mlobj.dst_id.value         
         return mlobj
 
     def conversion_to_dict(self, mlobj):
@@ -264,13 +318,18 @@ class Mapper():
         obj["__entry__"] = mlobj.DESCRIPTOR.name
         obj["src"] = [mlobj.src_id.name, int(mlobj.src_id.value)]
         obj["dst"] = [mlobj.dst_id.name, int(mlobj.dst_id.value)]
-        obj["factors"] = []
-        for f in mlobj.factors: obj["factors"].append(f)
+        obj["function"] = mlobj.function
+        obj["parameters"] = {}
+        for key in mlobj.parameters:
+            obj["parameters"][key] = mlobj.parameters[key]
+        #obj["factors"] = []
+        #for f in mlobj.factors: obj["factors"].append(f)
         
         return obj
 
     def dict_to_cast(self, obj):
         mlobj = Cast()
+        mlobj.id.value = str(uuid.uuid4())
         mlobj.src_scale_id.name = obj["src"][0][0]
         mlobj.src_scale_id.value = str(obj["src"][0][1])
         mlobj.src_aspect_id.name = obj["src"][1][0]
@@ -316,11 +375,31 @@ if __name__ == "__main__":
     store.id.name = "teststore.pb"
     store.id.value = str(uuid.uuid4())
     store.id.type = "uuid4"
-    
-    mapper = Mapper(store, path_to_schema,loglevel=args.loglevel)
+   
+    register = BaseObjectStore("/tmp", "test")
+    context = Context()
+    mapper = Mapper(store, register, context, path_to_schema,loglevel=args.loglevel)
     #mapper.__logger.setLevel(logging.DEBUG)
-
-    for name in glob.glob(mlayerpath+"/*/*"):
+    
+    mltypes = ["aspects", "references", "scales", "scales_for", "systems"] 
+    for _type in mltypes:
+        for name in glob.glob(mlayerpath+"/"+_type + "/*"):
+            try:
+                with(open(name) as f):
+                    data = json.load(f)
+            except:
+                print("error")
+            for l_i in data:
+                mapper.map_to_mlproto(l_i)
+    for name in glob.glob(mlayerpath+"/conversion/*"):
+        try:
+            with(open(name) as f):
+                data = json.load(f)
+        except:
+            print("error")
+        for l_i in data:
+            mapper.map_to_mlproto(l_i)
+    for name in glob.glob(mlayerpath+"/casting/*"):
         try:
             with(open(name) as f):
                 data = json.load(f)
@@ -329,8 +408,82 @@ if __name__ == "__main__":
         for l_i in data:
             mapper.map_to_mlproto(l_i)
 
-        
+    with open(mlayerpath+"/aspects/no_aspect.json") as f:
+        data = json.load(f)
 
+    mapper.context.no_aspect_uid = UID(data[0]['uid']) 
+        
+    #type_ids = mapper.register.index_content()
+    print(mapper.register._index)
+    aspects = mapper.register.pretty_search(mapper.register._index, 'name') 
+    print(aspects)
+    print("Indexed aspects")
+    #print(mapper.register._index["Aspect"])
+    print("==============================")
     for do in store.info.objects:
         logging.debug("%s %s", do.id, do.type)
     print(args, args.input, mlayerpath)
+    
+    print(len(mapper.context.scale_reg._objects.keys()))
+    for key in mapper.context.scale_reg._objects.keys():
+        print(key)
+    for key in mapper.context.aspect_reg._objects.keys():
+        print(key)
+    for key in mapper.context.conversion_reg._table.keys():
+        print(key)
+    ml_photon_energy_uid = UID(['ml_photon_energy', 291306321925738991196807372973812640971]) 
+
+    ml_si_joule_ratio_uid = UID(['ml_si_joule_ratio', 165050666678496469850612022016789737781])
+    ml_electronvolt_ratio_uid = UID(['ml_electronvolt_ratio', 121864523473489992307630707008460819401]) 
+    ml_si_THz_ratio_uid = UID(['ml_si_THz_ratio', 271382954339420591832277422907953823861]) 
+    ml_si_per_centimetre_ratio_uid = UID(['ml_si_cm-1_ratio', 333995508470114516586033303775415043902]) 
+    ml_si_nanometre_ratio_uid = UID(['ml_si_nm_ratio', 257091757625055920788370123828667027186]) 
+    ml_energy_uid = UID(["ml_energy",12139911566084412692636353460656684046])
+    try:
+        ok = mapper.context.convertible(ml_electronvolt_ratio_uid,
+                                    ml_photon_energy_uid, 
+                                    ml_si_THz_ratio_uid) 
+    except RuntimeError as e:
+        print(e)
+
+    try:
+        ok = mapper.context.convertible(ml_electronvolt_ratio_uid, 
+                                    ml_energy_uid,
+                                    ml_si_THz_ratio_uid) 
+    except RuntimeError as e:
+        print(e)
+    
+    try:
+        ok = mapper.context.convertible(ml_si_joule_ratio_uid, 
+                                    ml_photon_energy_uid, 
+                                    ml_electronvolt_ratio_uid) 
+        logging.info("Convertible scale %s", ok)
+    except RuntimeError as e:
+        print(e)
+
+    try:
+        ok = mapper.context.convertible(ml_si_joule_ratio_uid,
+                                    ml_energy_uid,
+                                    ml_electronvolt_ratio_uid)
+        logging.info("Convertible scale %s", ok)
+    except RuntimeError as e:
+        print(e)
+    try:
+        ok = mapper.context.convertible(UID(['ml_electronvolt_ratio', 121864523473489992307630707008460819401]),
+                UID(["ml_energy",12139911566084412692636353460656684046]),
+                UID(['ml_si_joule_ratio', 165050666678496469850612022016789737781]))
+        logging.info("Convertible scale %s", ok)
+    except RuntimeError as e:
+        print(e)
+            
+    scale_pair = (UID(['ml_electronvolt_ratio', 121864523473489992307630707008460819401]),UID(['ml_si_joule_ratio', 165050666678496469850612022016789737781]))
+    cnv = mapper.context.conversion_reg[scale_pair]
+    print(cnv)
+    if scale_pair in mapper.context.conversion_reg:
+        print("Found the pair")
+    #print(mapper.context.scale_reg["ml_electronvolt_ratio"])
+    #x = expr(1, ml_electronvolt_ratio, ml_photon_energy)
+    #t = value(x.convert(ml_si_terahertz_ratio))
+    #print(x, t)
+
+

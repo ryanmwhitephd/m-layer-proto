@@ -15,7 +15,10 @@
                     "type": "array"
                 },
                 "prefix": {
-                    "type": "number"
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
                 }
             },
             "additionalProperties": true,

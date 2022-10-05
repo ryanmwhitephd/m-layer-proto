@@ -38,12 +38,15 @@
                 "reference_id": {
                     "$ref": "#/definitions/mlayer.Identifier",
                     "additionalProperties": true
+                },
+                "systematic": {
+                    "type": "boolean"
                 }
             },
             "additionalProperties": true,
             "type": "object",
             "title": "Scale",
-            "description": "Scale is the m-layer concept which qualifies the reference unit with the type of scale.The same reference unit may be used to express data on different scale types."
+            "description": "Scale is the m-layer concept which qualifies the reference unit with the type of scale.The same reference unit may be used to express data on different scale types.systematic indicates whether scale is composed from a base units in a unit system"
         },
         "mlayer.Context": {
             "properties": {
