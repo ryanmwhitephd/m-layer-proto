@@ -34,10 +34,11 @@ from pathlib import Path
 import uuid
 import hashlib
 import urllib.parse
+import bsddb3
 from dataclasses import dataclass
 
 from simplekv.fs import FilesystemStore
-from google.protobuf.json_format import MessageToDict
+from google.protobuf.json_format import MessageToDict, MessageToJson
 from m_layer_register.logger import Logger
 from m_layer_register.model.mlayerv2_pb2 import * 
 #from m_layer_register.model.mlayerv2_pb2 import DigitalObjectStore, DigitalObject
@@ -278,6 +279,7 @@ class BaseObjectStore(BaseBook):
         Logger.configure(self,**kwargs)
         self._mstore = DigitalObjectStore()
         self._dstore = FilesystemStore(f"{root}")
+        self._dbstore = bsddb3.hashopen(f"{root}/{name}.db")
         self._alt_dstore = None
         if alt_root is not None:
             self.__logger.info("Create alternative data store location")
@@ -345,10 +347,11 @@ class BaseObjectStore(BaseBook):
         return self._aux
 
     def _load_from_path(self, name, id_):
+        key = f"{id_}.{name}.pb"
         self.__logger.info("Loading from path")
         print("Loading from path")
         try:
-            buf = self._dstore.get(name)
+            buf = self._dstore.get(key)
         except FileNotFoundError:
             self.__logger.error("Metastore data not found")
             raise
@@ -357,7 +360,7 @@ class BaseObjectStore(BaseBook):
             raise
 
         self._mstore.ParseFromString(buf)
-        if name != self._mstore.name:
+        if key != self._mstore.id.name:
             self.__logger.error(
                 "Store name expected: %s received: %s", self._name, name
             )
@@ -365,7 +368,7 @@ class BaseObjectStore(BaseBook):
 
     def save_store(self):
         buf = self._mstore.SerializeToString()
-        self._dstore.put(self._mstore.name, buf)
+        self._dstore.put(self._mstore.id.name, buf)
 
     def register_content(self, content, **kwargs):
         """
@@ -381,13 +384,25 @@ class BaseObjectStore(BaseBook):
             self.__logger.debug("Registering content %s", kwargs)
         
         obj = self._mstore.info.objects.add()
-        obj.id = content.id.value 
+        obj.id = content.id.value
+        pbid = obj.id + ".pb"
+        #try:
+        #    dbkey = uuid.UUID(obj.id) 
+        #except ValueError:
+        #    self.__logger.error("Malformed uid %s", obj.id)
+        #    raise
         #obj.name = content.id.name 
         #obj.address = None #self._dstore.url_for(obj.name)
         obj.content.Pack(content)
         self._index.append(content)
         obj.type = content.DESCRIPTOR.name
         self[obj.id] = obj
+        if self._dbstore.has_key(obj.id.encode()) is True:
+            self.__logger.info("Object already registered, id: %s", obj.id)
+            #self._dbstore[pbid.encode()] = obj.SerializeToString()
+        else:
+            self._dbstore[obj.id.encode()] = MessageToJson(content)
+            self._dbstore[pbid.encode()] = obj.SerializeToString()
         return MetaObject(content.id.name, content.id.value, obj.type, None)
    
     def index_content(self):
@@ -435,6 +450,7 @@ class BaseObjectStore(BaseBook):
         return search_result if search_result else None
 
         pass
+    
     def put(self, id_, content):
         """
         Writes data to kv store
@@ -543,6 +559,32 @@ class BaseObjectStore(BaseBook):
             self.__logger.error("Message not found in store %s", self[id_].address)
             raise
 
+    def _put_dbobject(self, id_, buf):
+        # bytestream to persist
+        self.__logger.debug("Putting buf to datastore %s", self[id_].address)
+        try:
+            self._dstore.put(self[id_].name, buf.to_pybytes())
+        except IOError:
+            self.__logger.error("IO error %s", self[id_].address)
+            raise
+        except Exception:
+            self.__logger.error("Unknown error put %s", self[id_].address)
+            raise
+
+    def _get_dbobject(self, id_):
+        # get object will read object into memory buffer
+        self.__logger.debug(self[id_])
+        try:
+            buf = self._dstore.get(self[id_].name)
+        except KeyError:
+            self.__logger.warning("Key not in store, try local %s", self[id_])
+            # File resides outside of kv store
+            # Used for registering files already existing in persistent storage
+            buf = pa.input_stream(self._parse_url(id_)).read()
+        except Exception:
+            self.__logger.error("Key not in store, try local %s", self[id_])
+        return buf
+    
     def _put_object(self, id_, buf):
         # bytestream to persist
         self.__logger.debug("Putting buf to datastore %s", self[id_].address)

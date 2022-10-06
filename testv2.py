@@ -16,6 +16,8 @@ import glob
 import argparse
 import os
 import logging
+import bsddb3
+
 from google.protobuf.json_format import MessageToJson
 from google.protobuf.json_format import MessageToDict
 
@@ -120,6 +122,9 @@ class Mapper():
         self.add_object(mlobj)
         self.context._load_entity(obj)
 
+    def load_from_register(self, refobj):
+        pass
+        #mlobj = self.register
 
     def dict_to_aspect(self, obj):
         mlobj = Aspect()
@@ -358,7 +363,12 @@ class Mapper():
         
         return obj
 
-
+def is_valid_uuid(uuid_to_test, version):
+    try:
+        uuid_obj = uuid.UUID(str(uuid_to_test), version = version)
+    except ValueError:
+        return False
+    return str(uuid_obj) == uuid_to_test
 
 if __name__ == "__main__":
    
@@ -367,6 +377,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--input', help="Input path to json files", action="store", dest="input")
     parser.add_argument('--loglevel', help="Logging level", action="store", dest="loglevel")
+    parser.add_argument('--storeid', help="Pb data store id", action="store", dest="storeid")
     args = parser.parse_args()
     mlayerpath = os.path.abspath(args.input + "/m-layer-concept/m_layer/json")
     path_to_schema = args.input+"/m-layer-proto/m_layer_register/format/"
@@ -375,15 +386,27 @@ if __name__ == "__main__":
     store.id.name = "teststore.pb"
     store.id.value = str(uuid.uuid4())
     store.id.type = "uuid4"
-   
-    register = BaseObjectStore("/tmp", "test")
+    
+    if args.storeid:
+        register = BaseObjectStore("/tmp", "test", store_uuid=args.storeid)
+    else:
+        register = BaseObjectStore("/tmp", "test")
     context = Context()
     mapper = Mapper(store, register, context, path_to_schema,loglevel=args.loglevel)
     #mapper.__logger.setLevel(logging.DEBUG)
     
     mltypes = ["aspects", "references", "scales", "scales_for", "systems"] 
-    for _type in mltypes:
-        for name in glob.glob(mlayerpath+"/"+_type + "/*"):
+    if args.storeid is None:
+        for _type in mltypes:
+            for name in glob.glob(mlayerpath+"/"+_type + "/*"):
+                try:
+                    with(open(name) as f):
+                        data = json.load(f)
+                except:
+                    print("error")
+                for l_i in data:
+                    mapper.map_to_mlproto(l_i)
+        for name in glob.glob(mlayerpath+"/conversion/*"):
             try:
                 with(open(name) as f):
                     data = json.load(f)
@@ -391,28 +414,21 @@ if __name__ == "__main__":
                 print("error")
             for l_i in data:
                 mapper.map_to_mlproto(l_i)
-    for name in glob.glob(mlayerpath+"/conversion/*"):
-        try:
-            with(open(name) as f):
-                data = json.load(f)
-        except:
-            print("error")
-        for l_i in data:
-            mapper.map_to_mlproto(l_i)
-    for name in glob.glob(mlayerpath+"/casting/*"):
-        try:
-            with(open(name) as f):
-                data = json.load(f)
-        except:
-            print("error")
-        for l_i in data:
-            mapper.map_to_mlproto(l_i)
-
+        for name in glob.glob(mlayerpath+"/casting/*"):
+            try:
+                with(open(name) as f):
+                    data = json.load(f)
+            except:
+                print("error")
+            for l_i in data:
+                mapper.map_to_mlproto(l_i)
+        register.save_store()  
+    
     with open(mlayerpath+"/aspects/no_aspect.json") as f:
         data = json.load(f)
 
     mapper.context.no_aspect_uid = UID(data[0]['uid']) 
-        
+    
     #type_ids = mapper.register.index_content()
     print(mapper.register._index)
     aspects = mapper.register.pretty_search(mapper.register._index, 'name') 
@@ -439,6 +455,36 @@ if __name__ == "__main__":
     ml_si_per_centimetre_ratio_uid = UID(['ml_si_cm-1_ratio', 333995508470114516586033303775415043902]) 
     ml_si_nanometre_ratio_uid = UID(['ml_si_nm_ratio', 257091757625055920788370123828667027186]) 
     ml_energy_uid = UID(["ml_energy",12139911566084412692636353460656684046])
+   
+    print("test uuid %i", ml_energy_uid)
+    print(type(ml_energy_uid.uuid))
+    for i in range(1,5):
+        print(i)
+        print(is_valid_uuid(ml_energy_uid.uuid, i))
+
+    #a_uid = uuid.UUID(ml_energy_uid.uuid)
+    #print(a_uid)
+    print("Test DB store")
+    pbid = str(ml_energy_uid.uuid) + ".pb"
+    dbdata = mapper.register._dbstore[str(ml_energy_uid.uuid).encode()]
+    dbdatapb= mapper.register._dbstore[pbid.encode()]
+    print(dbdata)
+    print(dbdatapb)
+    dbdata2 = json.loads(dbdata)
+    print(dbdata2)
+    print("Create new DO")
+    dbdatapb2 = DigitalObject()
+    dbdatapb2.ParseFromString(dbdatapb)
+    
+    print(dbdatapb2.id, dbdatapb2.type)
+    print("Content")
+    print(dbdatapb2.content)
+    print("Create Content object")
+    ml_energy_aspect = Aspect()
+    dbdatapb2.content.Unpack(ml_energy_aspect)
+    print(MessageToDict(ml_energy_aspect))
+    
+    #print(MessageToDict(dbdatapb2))
     try:
         ok = mapper.context.convertible(ml_electronvolt_ratio_uid,
                                     ml_photon_energy_uid, 
